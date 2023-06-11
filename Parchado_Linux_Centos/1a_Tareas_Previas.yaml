@@ -1,0 +1,223 @@
+---
+# ansible-playbook 1a_Tareas_Previas.yaml > 1_Tareas_Previas_1.log 2>&1
+# ansible-playbook 1a_Tareas_Previas.yaml
+# tail -f tareas_previas.txt
+
+- name: Tareas Previas
+  hosts: linux
+  become: yes
+  gather_facts: True
+  tasks:
+
+# Requisitos previos
+
+    - name: Crear directorio temporal para almacenar resultados del parchado
+      file:
+        path: /tmp/parchado
+        state: directory
+
+    - name: Crear archivo para almacenar resultados de las tareas Posteriores
+      file:
+        path: /tmp/parchado/tareas_previas.txt
+        state: touch
+
+#Tareas Previas || Validacion de Kernel
+    
+    - name: Validacion de Kernel
+      shell: |
+        echo "##########################################################################################################"
+        echo "### Validacion de Kernel"
+        echo "##########################################################################################################"
+        uname -a
+      register: kernel
+
+    - name: Mostrar la validación del kernel
+      debug:
+        msg: "La validación del kernel es {{ kernel.stdout }}"
+
+    - name: Guardar resultado de validación del kernel
+      lineinfile:
+        line: "{{ kernel.stdout }}"
+        dest: /tmp/parchado/tareas_previas.txt
+        insertafter: EOF
+
+#Tareas Previas || Validar fecha de ultimo reinicio
+    
+    - name: Validar fecha de ultimo reinicio
+      shell: |
+        echo "##########################################################################################################"
+        echo "#### Validar fecha de ultimo reinicio"
+        echo "##########################################################################################################"
+        uptime
+      register: uptime
+
+    - name: Mostrar fecha de ultimo reinicio
+      debug:
+        msg: "La fecha de ultimo reinicio es {{ uptime.stdout }}"
+    
+    - name: Guardar resultado de validación de fecha de ultimo reinicio
+      lineinfile:
+        line: "{{ uptime.stdout }}"
+        dest: /tmp/parchado/tareas_previas.txt
+        insertafter: EOF
+
+#Tareas Previas || Validar los procesos que necesitan reinicio y sus correspondientes archivos binarios >> centos, redhat
+    
+    - name: Validar los procesos que necesitan reinicio y sus correspondientes archivos binarios
+      shell: |
+        echo "##########################################################################################################"
+        echo "#### Validar los procesos que necesitan reinicio y sus correspondientes archivos binarios" -> RED HAT
+        echo "##########################################################################################################"
+        sudo yum needs-restarting -r
+      register: needs_restarting
+
+    - name: Mostrar los procesos que necesitan reinicio y sus correspondientes archivos binarios
+      debug:
+        msg: "Los procesos que necesitan reinicio y sus correspondientes archivos binarios son {{ needs_restarting.stdout }}"
+    
+    - name: Guardar resultado de validación de procesos que necesitan reinicio y sus correspondientes archivos binarios
+      lineinfile:
+        line: "{{ needs_restarting.stdout }}"
+        dest: /tmp/parchado/tareas_previas.txt
+        insertafter: EOF
+
+#Tareas Previas || Verificar servicios que requieren reinicio >> ubuntu
+
+    - name: Verificar servicios que requieren reinicio
+      shell: |
+         echo "##########################################################################################################"
+         echo "#### Verificar servicios que requieren reinicio"
+         echo "##########################################################################################################"
+         systemctl list-units --state=reboot-required --no-pager
+      register: reboot_required_output
+
+    - name: Mostrar servicios que requieren reinicio
+      debug:
+         var: reboot_required_output.stdout_lines
+
+    - name: Guardar resultado de validación de servicios que requieren reinicio
+      lineinfile:
+        line: "{{ reboot_required_output.stdout_lines }}"
+        dest: /tmp/parchado/tareas_previas.txt
+        insertafter: EOF
+
+#Tareas Previas || Validar salida a internet para descarga de parches
+
+    - name: Validar salida a internet para descarga de parches
+      shell: |
+        echo "##########################################################################################################"
+        echo "#### Validar salida a internet para descarga de parches"
+        echo "##########################################################################################################"
+        ping 8.8.8.8 -w 5
+      register: ping
+
+    - name: Mostrar salida a internet para descarga de parches
+      debug:
+        msg: "La salida a internet para descarga de parches es {{ ping.stdout }}"
+    
+    - name: Guardar resultado de validación de salida a internet para descarga de parches
+      lineinfile:
+        line: "{{ ping.stdout }}"
+        dest: /tmp/parchado/tareas_previas.txt
+        insertafter: EOF
+
+#Tareas Previas || Validar version de Sistema Operativo
+
+    - name: Validar version de Sistema Operativo
+      shell: |
+        echo "##########################################################################################################"
+        echo "#### Validar version de Sistema Operativo"
+        echo "##########################################################################################################"
+        cat /etc/*release
+      register: release
+    
+    - name: Mostrar version de Sistema Operativo
+      debug:
+        msg: "La version de Sistema Operativo es {{ release.stdout }}"
+    
+    - name: Guardar resultado de validación de version de Sistema Operativo
+      lineinfile:
+        line: "{{ release.stdout }}"
+        dest: /tmp/parchado/tareas_previas.txt  
+        insertafter: EOF
+
+#Tareas Previas || Validar estado de servicios y performance
+
+    - name: Validar estado de servicios y performance
+      shell: |
+        echo "##########################################################################################################"
+        echo "#### Validar estado de servicios y performance"
+        echo "##########################################################################################################"
+        top -n 1 -b
+      register: top
+    
+    - name: Mostrar estado de servicios y performance
+      debug:
+        msg: "El estado de servicios y performance es {{ top.stdout }}"
+    
+    - name: Guardar resultado de validación de estado de servicios y performance
+      lineinfile:
+        line: "{{ top.stdout }}"
+        dest: /tmp/parchado/tareas_previas.txt
+        insertafter: EOF
+
+#Tareas Previas || Validar lista de parches requeridos
+
+    - name: Validar lista de parches requeridos
+      shell: |
+        echo "##########################################################################################################"
+        echo "#### Listar todas los paquetes de seguridad disponibles"
+        echo "##########################################################################################################"
+        yum list-security 
+      register: updateinfo
+
+    - name: Mostrar lista de parches requeridos
+      debug:
+        msg: "La lista de parches requeridos es {{ updateinfo.stdout }}"
+    
+    - name: Guardar resultado de validación de lista de parches requeridos
+      lineinfile:
+        line: "{{ updateinfo.stdout }}"
+        dest: /tmp/parchado/tareas_previas.txt
+        insertafter: EOF
+
+#Tareas Previas || Validar espacio en la partición / de cada servidor.
+
+    - name: Validar espacio en la partición / de cada servidor.
+      shell: |
+        echo "##########################################################################################################"
+        echo "#### Validar espacio en la partición / de cada servidor."
+        echo "##########################################################################################################"
+        df -hT
+      register: df
+
+    - name: Mostrar espacio en la partición / de cada servidor.
+      debug:
+        msg: "El espacio en la partición / de cada servidor es {{ df.stdout }}"
+    
+    - name: Guardar resultado de validación de espacio en la partición / de cada servidor.
+      lineinfile:
+        line: "{{ df.stdout }}"
+        dest: /tmp/parchado/tareas_previas.txt
+        insertafter: EOF
+
+#Tareas Previas || Revisar los ultimos 50 logs historicos
+
+    - name: Revisar los ultimos 50 logs historicos
+      shell: |
+        echo "##########################################################################################################"
+        echo "#### Revisar los ultimos 50 logs historicos"
+        echo "##########################################################################################################"
+        history 50
+      register: history
+
+    - name: Mostrar los ultimos 50 logs historicos
+      debug:
+        msg: "Los ultimos 50 logs historicos son {{ history.stdout }}"   
+    
+    - name: Guardar resultado de validación de los ultimos 50 logs historicos
+      lineinfile:
+        line: "{{ history.stdout }}"
+        dest: /tmp/parchado/tareas_previas.txt
+        insertafter: EOF
+...

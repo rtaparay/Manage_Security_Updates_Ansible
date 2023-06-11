@@ -1,0 +1,119 @@
+---
+# ansible-playbook 3a_Tareas_Posteriores.yaml
+
+- name: Tareas Posteriores
+  hosts: linux
+  become: yes
+  gather_facts: False
+  tasks:
+
+# Requisitos previos
+ 
+    - name: Crear archivo para almacenar resultados de las tareas Posteriores
+      file:
+        path: /tmp/parchado/tareas_posteriores.txt
+        state: touch
+
+
+#Tareas Posteriores ||  Guardar evidencias de parches instalados en un Archivo .txt en el servidor 
+
+    - name: Guardar evidencias de parches instalados en un Archivo .txt en el servidor 
+      shell: |
+        echo "#####################################################################################"
+        echo "#### Guardando evidencias de parches instalados en un Archivo .txt en el servidor"
+        echo "#####################################################################################"
+        yum list-security --security
+      register: updateinfo
+
+    - name: Mostrar evidencias de parches instalados en un Archivo .txt en el servidor
+      debug:
+        msg: "Las evidencias de parches instalados en un Archivo txt en el servidor son {{ updateinfo.stdout }}"
+    
+    - name: Guardar resultado de evidencias de parches instalados en un Archivo .txt en el servidor
+      lineinfile:
+        line: "{{ updateinfo.stdout }}"
+        dest: /tmp/parchado/tareas_posteriores.txt
+        insertafter: EOF
+
+#Tareas Posteriores || observar la hora del sistema, el hostname y la IP
+
+    - name: observar la hora del sistema, el hostname y la IP
+      shell: |
+        echo "#####################################################################################"
+        echo "#### observar la hora del sistema, el hostname y la IP"
+        echo "#####################################################################################"
+        date && hostname && hostname -I
+      register: dateInfo
+
+    - name: Mostrar la hora del sistema, el hostname y la IP
+      debug:
+        msg: "La hora del sistema, el hostname y la IP es {{ dateInfo.stdout }}"
+    
+    - name: Guardar resultado de la hora del sistema, el hostname y la IP
+      lineinfile:
+        line: "{{ dateInfo.stdout }}"
+        dest: /tmp/parchado/tareas_posteriores.txt
+        insertafter: EOF
+
+#Tareas Posteriores ||  Validar reinicio de servidor posterior al parchado
+
+    - name: Validar reinicio de servidor posterior al parchado
+      shell: |
+        echo "#####################################################################################"
+        echo "#### Validar reinicio de servidor posterior al parchado"
+        echo "#####################################################################################"
+        uptime
+      register: uptime
+    
+    - name: Mostrar reinicio de servidor posterior al parchado
+      debug:
+        msg: "El reinicio de servidor posterior al parchado es {{ uptime.stdout }}"
+    
+    - name: Guardar resultado de reinicio de servidor posterior al parchado
+      lineinfile:
+        line: "{{ uptime.stdout }}"
+        dest: /tmp/parchado/tareas_posteriores.txt
+        insertafter: EOF
+
+#Tareas Previas || Validar estado de servicios y performance
+
+    - name: Validar estado de servicios y performance
+      shell: |
+        echo "#####################################################################################"
+        echo "#### Validar estado de servicios y performance"
+        echo "#####################################################################################"
+        top -n 1 -b
+      register: top
+    
+    - name: Mostrar estado de servicios y performance
+      debug:
+        msg: "El estado de servicios y performance es {{ top.stdout }}"
+    
+    - name: Guardar resultado de validación de estado de servicios y performance
+      lineinfile:
+        line: "{{ top.stdout }}"
+        dest: /tmp/parchado/tareas_posteriores.txt
+        insertafter: EOF
+
+
+#Tareas Previas || Copiar Resultado del parchado al servidor ansible
+ 
+    - name: Copiar Resultado del parchado al S3
+      shell: |
+        echo "#####################################################################################"
+        echo "#### Copiar Resultado del parchado al S3"
+        echo "#####################################################################################"
+        /usr/local/bin/aws s3 cp /tmp/parchado s3://resultados-s3-parchado/parchado/$HOSTNAME/$($date +'%d-%m-%Y') --recursive
+      register: s3
+    
+    - name: Mostrar Resultado enviados al S3
+      debug:
+        msg: "El Resultado enviados al S3 del parchado es {{ s3.stdout }}"
+    
+    - name: Guardar resultado de Resultado enviados al S3
+      lineinfile:
+        line: "{{ s3.stdout }}"
+        dest: /tmp/parchado/tareas_posteriores.txt
+        insertafter: EOF
+      
+...

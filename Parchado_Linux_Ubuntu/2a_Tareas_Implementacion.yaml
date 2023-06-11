@@ -1,0 +1,63 @@
+---
+# ansible-playbook 2a_Tareas_Implementacion.yaml
+
+- name: Tareas Implementacion
+  hosts: linux
+  become: yes
+  gather_facts: False
+  tasks:
+
+# Requisitos previos
+
+    - name: Crear archivo para almacenar resultados de las tareas de Implementacion
+      file:
+        path: /tmp/parchado/tareas_implementacion.txt
+        state: touch
+
+#Tareas Previas ||  Ejecutar instalación de parches de seguridad 
+
+    - name: Ejecutar instalacion de parches de seguridad 
+      shell: |
+        echo "################################################################"
+        echo "#### Ejecutando instalacion de parches de seguridad"
+        echo "################################################################"
+        sudo apt-get -s dist-upgrade | grep "^Inst" | grep -i securi | awk -F " " {'print $2'} | xargs apt-get install -y
+      register: updateSecurity
+
+    - name: Mostrar instalación de parches de seguridad 
+      debug:
+        msg: "La instalacion de parches de seguridad es {{ updateSecurity.stdout }}"
+    
+    - name: Guardar resultado de instalación de parches de seguridad
+      lineinfile:
+        line: "{{ updateSecurity.stdout }}"
+        dest: /tmp/parchado/tareas_implementacion.txt
+        insertafter: EOF
+
+#Tareas Previas || Reinicio de servidor posterior al parchado
+
+    - name: Reinicio de servidor posterior al parchado
+      shell: sudo shutdown -r now
+      async: 1    # Ejecutar en segundo plano
+      poll: 0     # No esperar a que termine
+
+    - name: Validar Conexión SSH despues de 1 min posterior al reinicio
+      wait_for_connection:
+        delay: 60  # Retardo inicial de 60 segundos antes de iniciar las comprobaciones
+        timeout: 300 # Tiempo máximo de espera de 300 segundos
+        sleep: 5 # Retardo entre comprobaciones de 5 segundos
+
+#Tareas Previas || Validar salida a internet para descartar problemas de conectividad
+
+    - name: Validar salida a internet para descartar problemas de conectividad
+      shell: |
+        echo "##########################################################################"
+        echo "#### Validando salida a internet para descartar problemas de conectividad"
+        echo "##########################################################################"
+        ping 8.8.8.8 -w 5
+      register: ping
+
+    - name: Mostrar salida a internet para descartar problemas de conectividad
+      debug:
+        msg: "La salida a internet es {{ ping.stdout }}"
+...

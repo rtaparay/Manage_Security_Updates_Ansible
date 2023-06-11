@@ -14,9 +14,6 @@ Este repositorio contiene playbooks de Ansible para administrar parches de segur
 
 ## Tareas Previas
 
-
-## Tareas Previas
-
 ### Requisitos previos
 
 - Crear directorio temporal para almacenar resultados del parchado en `/tmp/parchado`.

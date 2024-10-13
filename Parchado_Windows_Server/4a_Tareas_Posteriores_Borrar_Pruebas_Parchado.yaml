@@ -1,0 +1,15 @@
+---
+# ansible-playbook 4a_Tareas_Posteriores_Borrar_Pruebas_Parchado.yaml
+
+- name: Tareas Posteriores
+  hosts: windows
+  become: yes
+  become_method: runas  # Utilizar runas en Windows
+  become_user: ansible  # Usuario administrador en Windows
+  gather_facts: False  # No es necesario recolectar hechos
+  tasks:
+
+    - name: Eliminar pruebas del parchado
+      win_file:
+        path: C:\parchado
+        state: absent

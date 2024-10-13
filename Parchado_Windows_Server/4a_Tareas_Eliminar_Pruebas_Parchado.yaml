@@ -1,5 +1,5 @@
 ---
-# ansible-playbook 4a_Tareas_Posteriores_Borrar_Pruebas_Parchado.yaml
+# ansible-playbook 4a_Tareas_Eliminar_Pruebas_Parchado.yaml
 
 - name: Tareas Posteriores
   hosts: windows

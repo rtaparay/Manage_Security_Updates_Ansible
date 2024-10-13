@@ -1,7 +1,7 @@
 ---
 # ansible-playbook 1a_Tareas_Previas.yaml > 1_Tareas_Previas_1.log 2>&1
 # ansible-playbook 1a_Tareas_Previas.yaml
-# tail -f tareas_previas.txt
+# tail -f /tmp/parchado/tareas_previas.txt
 
 - name: Tareas Previas
   hosts: linux
@@ -21,8 +21,6 @@
         path: /tmp/parchado/tareas_previas.txt
         state: touch
 
-#Tareas Previas || Validacion de Kernel
-    
     - name: Validacion de Kernel
       shell: |
         echo "##########################################################################################################"
@@ -41,8 +39,50 @@
         dest: /tmp/parchado/tareas_previas.txt
         insertafter: EOF
 
-#Tareas Previas || Validar fecha de ultimo reinicio
-    
+    # COMPROBAR PARCHES AMAZON LINUX
+
+    - name: Validar lista de parches requeridos en Amazon Linux 2
+      shell: |
+        echo "##########################################################################################################"
+        echo "#### Listar todos los paquetes de seguridad disponibles en Amazon Linux 2"
+        echo "##########################################################################################################"
+        yum updateinfo list security
+      register: updateinfo_amzn2
+      when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2"
+
+    - name: Validar lista de parches requeridos en Amazon Linux 2023
+      shell: |
+        echo "##########################################################################################################"
+        echo "#### Listar todos los paquetes de seguridad disponibles en Amazon Linux 2023"
+        echo "##########################################################################################################"
+        dnf updateinfo list security
+      register: updateinfo_amzn2023
+      when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
+
+    - name: Mostrar lista de parches requeridos para Amazon Linux 2
+      debug:
+        msg: "{{ updateinfo_amzn2.stdout }}"
+      when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2"
+
+    - name: Mostrar lista de parches requeridos para Amazon Linux 2023
+      debug:
+        msg: "{{ updateinfo_amzn2023.stdout }}"
+      when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
+
+    - name: Guardar resultado de validación de lista de parches requeridos para Amazon Linux 2
+      lineinfile:
+        line: "{{ updateinfo_amzn2.stdout }}"
+        dest: /tmp/parchado/tareas_previas.txt
+        insertafter: EOF
+      when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2"
+
+    - name: Guardar resultado de validación de lista de parches requeridos para Amazon Linux 2023
+      lineinfile:
+        line: "{{ updateinfo_amzn2023.stdout }}"
+        dest: /tmp/parchado/tareas_previas.txt
+        insertafter: EOF
+      when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
+
     - name: Validar fecha de ultimo reinicio
       shell: |
         echo "##########################################################################################################"
@@ -60,48 +100,6 @@
         line: "{{ uptime.stdout }}"
         dest: /tmp/parchado/tareas_previas.txt
         insertafter: EOF
-
-#Tareas Previas || Validar los procesos que necesitan reinicio y sus correspondientes archivos binarios >> centos, redhat
-    
-    - name: Validar los procesos que necesitan reinicio y sus correspondientes archivos binarios
-      shell: |
-        echo "##########################################################################################################"
-        echo "#### Validar los procesos que necesitan reinicio y sus correspondientes archivos binarios" -> RED HAT
-        echo "##########################################################################################################"
-        sudo yum needs-restarting -r
-      register: needs_restarting
-
-    - name: Mostrar los procesos que necesitan reinicio y sus correspondientes archivos binarios
-      debug:
-        msg: "Los procesos que necesitan reinicio y sus correspondientes archivos binarios son {{ needs_restarting.stdout }}"
-    
-    - name: Guardar resultado de validación de procesos que necesitan reinicio y sus correspondientes archivos binarios
-      lineinfile:
-        line: "{{ needs_restarting.stdout }}"
-        dest: /tmp/parchado/tareas_previas.txt
-        insertafter: EOF
-
-#Tareas Previas || Verificar servicios que requieren reinicio >> ubuntu
-
-    - name: Verificar servicios que requieren reinicio
-      shell: |
-         echo "##########################################################################################################"
-         echo "#### Verificar servicios que requieren reinicio"
-         echo "##########################################################################################################"
-         systemctl list-units --state=reboot-required --no-pager
-      register: reboot_required_output
-
-    - name: Mostrar servicios que requieren reinicio
-      debug:
-         var: reboot_required_output.stdout_lines
-
-    - name: Guardar resultado de validación de servicios que requieren reinicio
-      lineinfile:
-        line: "{{ reboot_required_output.stdout_lines }}"
-        dest: /tmp/parchado/tareas_previas.txt
-        insertafter: EOF
-
-#Tareas Previas || Validar salida a internet para descarga de parches
 
     - name: Validar salida a internet para descarga de parches
       shell: |
@@ -121,8 +119,6 @@
         dest: /tmp/parchado/tareas_previas.txt
         insertafter: EOF
 
-#Tareas Previas || Validar version de Sistema Operativo
-
     - name: Validar version de Sistema Operativo
       shell: |
         echo "##########################################################################################################"
@@ -140,8 +136,6 @@
         line: "{{ release.stdout }}"
         dest: /tmp/parchado/tareas_previas.txt  
         insertafter: EOF
-
-#Tareas Previas || Validar estado de servicios y performance
 
     - name: Validar estado de servicios y performance
       shell: |
@@ -161,28 +155,6 @@
         dest: /tmp/parchado/tareas_previas.txt
         insertafter: EOF
 
-#Tareas Previas || Validar lista de parches requeridos
-
-    - name: Validar lista de parches requeridos
-      shell: |
-        echo "##########################################################################################################"
-        echo "#### Listar todas los paquetes de seguridad disponibles"
-        echo "##########################################################################################################"
-        yum list-security 
-      register: updateinfo
-
-    - name: Mostrar lista de parches requeridos
-      debug:
-        msg: "La lista de parches requeridos es {{ updateinfo.stdout }}"
-    
-    - name: Guardar resultado de validación de lista de parches requeridos
-      lineinfile:
-        line: "{{ updateinfo.stdout }}"
-        dest: /tmp/parchado/tareas_previas.txt
-        insertafter: EOF
-
-#Tareas Previas || Validar espacio en la partición / de cada servidor.
-
     - name: Validar espacio en la partición / de cada servidor.
       shell: |
         echo "##########################################################################################################"
@@ -200,8 +172,6 @@
         line: "{{ df.stdout }}"
         dest: /tmp/parchado/tareas_previas.txt
         insertafter: EOF
-
-#Tareas Previas || Revisar los ultimos 50 logs historicos
 
     - name: Revisar los ultimos 50 logs historicos
       shell: |

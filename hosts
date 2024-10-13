@@ -2,7 +2,8 @@
 
 
 [linux]
-srv-linux ansible_host=10.0.2.22
+srv-linux-2 ansible_host=<IP>
+srv-linux-3 ansible_host=<IP>
 
 [linux:vars]
 ansible_connection = ssh
@@ -10,11 +11,11 @@ ansible_become_method=sudo
 ansible_python_interpreter=/usr/bin/python3
 ansible_user=ansible
 ansible_password=<password_server>
-# ansible_private_key_file=/var/jenkins_home/ansible/remote-key
+# ansible_private_key_file=/key/remote-key
 
 [windows]
-srv-windows-2012R2  ansible_host=192.168.100.169
-srv-windows-2022    ansible_host=192.168.100.168
+srv-windows-2012R2  ansible_host=<IP>
+srv-windows-2022    ansible_host=<IP>
 
 [windows:vars]
 ansible_user=ansible

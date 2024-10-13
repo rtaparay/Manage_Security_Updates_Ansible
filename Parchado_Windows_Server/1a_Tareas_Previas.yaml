@@ -1,0 +1,154 @@
+---
+# ansible-playbook 1a_Tareas_Previas.yaml > tareas_previas.log 2>&1
+# ansible-playbook 1a_Tareas_Previas.yaml
+# tail -f C:\parchado\tareas_previas.txt
+
+- name: Tareas Previas en Windows Server
+  hosts: windows
+  become: yes
+  become_method: runas  # Utilizar runas en Windows
+  become_user: ansible  # Usuario administrador en Windows
+  gather_facts: True  # Habilitar la recolección de hechos
+  tasks:
+
+    # Requisitos previos
+    - name: Crear directorio temporal para almacenar resultados del parchado
+      win_file:
+        path: C:\parchado
+        state: directory
+
+    - name: Crear archivo para almacenar resultados de las tareas previas
+      win_file:
+        path: "C:\\parchado\\tareas_previas-{{ ansible_date_time.date }}.txt"
+        state: touch
+
+    # Validación de la versión del sistema operativo
+    - name: Validar versión del sistema operativo
+      win_shell: |
+        Write-Host "#####################################################################################"
+        Write-Host "#### Validar versión del sistema operativo"
+        Write-Host "#####################################################################################"
+        Get-ComputerInfo | Select-Object WindowsVersion, WindowsBuildLabEx
+      register: os_version
+
+    - name: Mostrar la versión del sistema operativo
+      debug:
+        msg: "La versión del sistema operativo es {{ os_version.stdout }}"
+
+    - name: Guardar resultado de la versión del sistema operativo
+      win_lineinfile:
+        line: "{{ os_version.stdout }}"
+        path: "C:\\parchado\\tareas_previas-{{ ansible_date_time.date }}.txt"
+        insertafter: EOF
+
+    # Validación de espacio en disco
+    - name: Validar espacio en disco
+      win_shell: |
+        Write-Host "#####################################################################################"
+        Write-Host "#### Validar espacio en disco"
+        Write-Host "#####################################################################################"
+        Get-PSDrive -PSProvider FileSystem | Select-Object Name, @{Name='Used (GB)';Expression={[math]::round($_.Used/1GB,2)}}, @{Name='Free (GB)';Expression={[math]::round($_.Free/1GB,2)}}
+      register: disk_space
+
+    - name: Mostrar espacio en disco
+      debug:
+        msg: "El espacio en disco es: {{ disk_space.stdout }}"
+
+    - name: Guardar resultado del espacio en disco
+      win_lineinfile:
+        line: "{{ disk_space.stdout }}"
+        path: "C:\\parchado\\tareas_previas-{{ ansible_date_time.date }}.txt"
+        insertafter: EOF
+
+    # Validación de reinicios pendientes
+    # ansible-playbook 1a_Tareas_Previas.yaml --tags verificar_reinicio
+    - name: Verificar si hay reinicios pendientes
+      win_shell: |
+        Write-Host "#####################################################################################"
+        Write-Host "#### Verificar si hay reinicios pendientes"
+        Write-Host "#####################################################################################"
+        Get-WURebootStatus
+      register: reboot_status
+      ignore_errors: yes
+      tags: verificar_reinicio
+
+    - name: Mostrar si hay reinicios pendientes
+      debug:
+        msg: "El estado de reinicio es: {{ reboot_status.stdout }}"
+
+    # Validar fecha y hora del último reinicio
+    - name: Validar fecha del último reinicio
+      win_shell: |
+        Write-Host "#####################################################################################"
+        Write-Host "#### Validar fecha del último reinicio"
+        Write-Host "#####################################################################################"
+        (Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime
+      register: last_boot_time
+
+    - name: Mostrar fecha del último reinicio
+      debug:
+        msg: "La fecha del último reinicio es: {{ last_boot_time.stdout }}"
+
+    # Validar conectividad a internet (haciendo ping)
+    - name: Validar salida a internet
+      win_shell: |
+        Write-Host "#####################################################################################"
+        Write-Host "#### Validar salida a internet"
+        Write-Host "#####################################################################################"
+        Test-Connection -ComputerName 8.8.8.8 -Count 4
+      register: internet_connectivity
+
+    - name: Mostrar conectividad a internet
+      debug:
+        msg: "La conectividad a internet es: {{ internet_connectivity.stdout }}"
+
+    - name: Guardar resultado de validación de conectividad a internet
+      win_lineinfile:
+        line: "{{ internet_connectivity.stdout }}"
+        path: "C:\\parchado\\tareas_previas-{{ ansible_date_time.date }}.txt"
+        insertafter: EOF
+
+    # Validar lista de actualizaciones de seguridad pendientes
+    - name: Comprobar actualizaciones de "SecurityUpdates", "CriticalUpdates", y "UpdateRollups" usando PSWindowsUpdate
+      win_shell: |
+        Write-Host "###########################################################################################################################"
+        Write-Host "#### Comprobar actualizaciones de "SecurityUpdates", "CriticalUpdates", y "UpdateRollups" usando PSWindowsUpdate"
+        Write-Host "###########################################################################################################################"
+        Get-WindowsUpdate -Category 'Security Updates', 'Critical Updates' -Verbose |  Format-Table -Property KB, Size, Title -AutoSize | Out-String
+      register: security_updates
+
+    - name: Mostrar parches de seguridad pendientes
+      debug:
+        msg: "Los parches de seguridad pendientes son: {{ security_updates.stdout }}"
+
+    - name: Guardar lista de parches de seguridad pendientes
+      win_lineinfile:
+        line: "{{ security_updates.stdout }}"
+        path: "C:\\parchado\\tareas_previas-{{ ansible_date_time.date }}.txt"
+        insertafter: EOF
+
+    # Verificar los últimos 50 eventos de seguridad en los logs del sistema
+    - name: Revisar últimos 50 eventos de seguridad
+      win_shell: |
+        Write-Host "#####################################################################################"
+        Write-Host "#### Revisar últimos 50 eventos de seguridad"
+        Write-Host "#####################################################################################"
+        Get-EventLog -LogName Security -Newest 50
+      register: security_events
+
+    - name: Mostrar últimos 50 eventos de seguridad
+      debug:
+        msg: "Los últimos 50 eventos de seguridad son: {{ security_events.stdout }}"
+
+    - name: Guardar los últimos 50 eventos de seguridad en el archivo
+      win_lineinfile:
+        line: "{{ security_events.stdout }}"
+        path: "C:\\parchado\\tareas_previas-{{ ansible_date_time.date }}.txt"
+        insertafter: EOF
+        
+    # - name: Restablecer el componente Windows Update (opcional, si es necesario)
+    #   win_shell: |
+    #     Reset-WUComponents -Verbose
+    #   args:
+    #     executable: powershell.exe
+    #   when: wu_reboot_status.changed

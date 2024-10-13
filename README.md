@@ -1,137 +1,66 @@
-# Administración de Parches de Seguridad con Ansible
+# Administración de Parches de Seguridad con Ansible 🚀
 
-Este repositorio contiene playbooks de Ansible para administrar parches de seguridad en servidores Linux. Los playbooks realizan una serie de tareas previas para validar el estado del sistema antes de aplicar los parches.
+![Ansible](https://img.shields.io/badge/Automation-Ansible-blue?logo=ansible&logoColor=white) ![Security](https://img.shields.io/badge/Security-Patches-green?logo=security&logoColor=white)
 
-## Tareas Previas
+Este repositorio contiene una serie de **playbooks de Ansible** diseñados para administrar parches de seguridad en servidores **Linux** y **Windows**. Los playbooks incluyen tareas de validación previas, instalación de parches y comprobaciones posteriores para asegurar la correcta aplicación de los parches y el buen estado del sistema.
 
-### Requisitos previos
+## Playbooks incluidos
 
-- Crear directorio temporal para almacenar resultados del parchado en `/tmp/parchado`.
-- Crear archivo para almacenar resultados de las tareas posteriores en `/tmp/parchado/tareas_previas.txt`.
+### 1. Tareas Previas 📝
+Este playbook realiza una serie de validaciones importantes antes de aplicar los parches de seguridad:
 
-### Validación de Kernel
+- **Crear directorios y archivos temporales** para registrar los resultados.
+- **Validar la versión del kernel**.
+- **Verificar la fecha del último reinicio**.
+- **Comprobar si hay procesos y servicios que necesitan reinicio**.
+- **Verificar la conectividad a Internet** para asegurar que los parches puedan descargarse.
+- **Comprobar la versión del sistema operativo** y el **espacio en disco**.
+- **Revisar los últimos 50 eventos de seguridad**.
 
-- Validar el kernel del sistema.
-- Mostrar la validación del kernel.
-- Guardar el resultado de la validación del kernel en `/tmp/parchado/tareas_previas.txt`.
+📂 Resultados guardados en `/tmp/parchado/tareas_previas.txt` o `C:\parchado\tareas_previas.txt` (Windows).
 
-### Validar fecha de último reinicio
+### 2. Tareas de Implementación 💻
+Este playbook se encarga de la instalación de los parches de seguridad en el sistema:
 
-- Validar la fecha de último reinicio del sistema.
-- Mostrar la fecha de último reinicio.
-- Guardar el resultado de la validación de la fecha de último reinicio en `/tmp/parchado/tareas_previas.txt`.
+- **Instalación de parches de seguridad**: Utiliza herramientas como `PSWindowsUpdate` en Windows o `apt/yum` en Linux.
+- **Reinicio del servidor** posterior a la instalación.
+- **Validar la conexión SSH** tras el reinicio.
+- **Comprobar la conectividad a Internet** después de aplicar los parches.
 
-### Validar los procesos que necesitan reinicio y sus correspondientes archivos binarios (CentOS, Red Hat, Ubuntu)
+📂 Resultados guardados en `/tmp/parchado/tareas_implementacion.txt` o `C:\parchado\tareas_implementacion.txt` (Windows).
 
-- Validar los procesos que necesitan reinicio y sus correspondientes archivos binarios.
-- Mostrar los procesos que necesitan reinicio y sus correspondientes archivos binarios.
-- Guardar el resultado de la validación de los procesos que necesitan reinicio y sus correspondientes archivos binarios en `/tmp/parchado/tareas_previas.txt`.
+### 3. Tareas Posteriores ✅
+En este playbook se realizan las validaciones después de haber aplicado los parches:
 
-### Verificar servicios que requieren reinicio (Ubuntu)
+- **Guardar evidencias de parches instalados** en un archivo de texto.
+- **Comprobar la hora del sistema, el hostname y la IP**.
+- **Verificar si el servidor fue reiniciado** correctamente tras el parchado.
+- **Validar el estado de los servicios y el rendimiento**.
+- **Historial de actualizaciones instaladas**: Muestra el historial reciente de actualizaciones.
 
-- Verificar los servicios que requieren reinicio.
-- Mostrar los servicios que requieren reinicio.
-- Guardar el resultado de la validación de los servicios que requieren reinicio en `/tmp/parchado/tareas_previas.txt`.
+📂 Resultados guardados en `/tmp/parchado/tareas_posteriores.txt` o `C:\parchado\tareas_posteriores.txt` (Windows).
 
-### Validar salida a internet para descarga de parches
+### 4. Borrar Pruebas del Parchado 🧹
+Este playbook elimina los archivos temporales y carpetas creadas durante el proceso de parchado:
 
-- Validar la salida a internet para descarga de parches.
-- Mostrar la salida a internet para descarga de parches.
-- Guardar el resultado de la validación de la salida a internet para descarga de parches en `/tmp/parchado/tareas_previas.txt`.
-
-### Validar versión de Sistema Operativo
-
-- Validar la versión del Sistema Operativo.
-- Mostrar la versión del Sistema Operativo.
-- Guardar el resultado de la validación de la versión del Sistema Operativo en `/tmp/parchado/tareas_previas.txt`.
-
-### Validar estado de servicios y performance
-
-- Validar el estado de servicios y performance del sistema.
-- Mostrar el estado de servicios y performance.
-- Guardar el resultado de la validación del estado de servicios y performance en `/tmp/parchado/tareas_previas.txt`.
-
-### Validar lista de parches requeridos
-
-- Validar la lista de parches requeridos.
-- Mostrar la lista de parches requeridos.
-- Guardar el resultado de la validación de la lista de parches requeridos en `/tmp/parchado/tareas_previas.txt`.
-
-### Validar espacio en la partición / de cada servidor
-
-- Validar el espacio en la partición / de cada servidor.
-- Mostrar el espacio en la partición / de cada servidor.
-- Guardar el resultado de la validación del espacio en la partición / de cada servidor en `/tmp/parchado/tareas_previas.txt`.
-
-### Revisar los últimos 50 logs históricos
-
-- Revisar los últimos 50 logs históricos.
-- Mostrar los últimos 50 logs históricos.
-- Guardar el resultado de la validación de los últimos 50 logs históricos en `/tmp/parchado/tareas_previas.txt`.
-
-## Tareas Implementación
-
-### Requisitos previos
-
-- Crear archivo para almacenar resultados de las tareas de Implementación en `/tmp/parchado/tareas_implementacion.txt`.
-
-### Ejecutar instalación de parches de seguridad
-
-- Ejecutar la instalación de parches de seguridad.
-- Mostrar la instalación de parches de seguridad.
-- Guardar el resultado de la instalación de parches de seguridad en `/tmp/parchado/tareas_implementacion.txt`.
-
-### Reinicio de servidor posterior al parchado
-
-- Reiniciar el servidor posterior al parchado.
-
-### Validar conexión SSH después de 1 min posterior al reinicio
-
-- Validar la conexión SSH después de 1 minuto posterior al reinicio.
-
-### Validar salida a internet para descartar problemas de conectividad
-
-- Validar la salida a internet para descartar problemas de conectividad.
-- Mostrar la salida a internet.
-
-## Tareas Posteriores
-
-### Requisitos previos
-
-- Crear archivo para almacenar resultados de las tareas Posteriores en `/tmp/parchado/tareas_posteriores.txt`.
-
-### Guardar evidencias de parches instalados en un Archivo .txt en el servidor
-
-- Guardar evidencias de los parches instalados en un archivo .txt en el servidor.
-- Mostrar las evidencias de los parches instalados en un archivo .txt en el servidor.
-- Guardar el resultado de las evidencias de los parches instalados en un archivo .txt en el servidor en `/tmp/parchado/tareas_posteriores.txt`.
-
-### Observar la hora del sistema, el hostname y la IP
-
-- Observar la hora del sistema, el hostname y la IP.
-- Mostrar la hora del sistema, el hostname y la IP.
-- Guardar el resultado de la hora del sistema, el hostname y la IP en `/tmp/parchado/tareas_posteriores.txt`.
-
-### Validar reinicio de servidor posterior al parchado
-
-- Validar el reinicio del servidor posterior al parchado.
-- Mostrar el reinicio del servidor posterior al parchado.
-- Guardar el resultado del reinicio del servidor posterior al parchado en `/tmp/parchado/tareas_posteriores.txt`.
-
-### Validar estado de servicios y performance
-
-- Validar el estado de servicios y performance del sistema.
-- Mostrar el estado de servicios y performance.
-- Guardar el resultado de la validación del estado de servicios y performance en `/tmp/parchado/tareas_posteriores.txt`.
-
-### Copiar Resultado del parchado al servidor ansible
-
-- Copiar el resultado del parchado al servidor Ansible.
-- Mostrar el resultado enviado al servidor Ansible.
-- Guardar el resultado del envío al servidor Ansible en `/tmp/parchado/tareas_posteriores.txt`.
-
-### Eliminar carpeta parchado
-
-- Eliminar la carpeta "parchado" que contiene las pruebas del parchado.
+- **Eliminar la carpeta `parchado`** utilizada para almacenar los resultados del proceso de parchado.
 
 ---
+
+## Ejecución de los Playbooks 📜
+
+Cada playbook puede ejecutarse individualmente con el siguiente comando:
+
+```bash
+ansible-playbook <nombre_del_playbook>.yaml
+```
+
+## 📜 Requisitos
+
+- Ansible instalado.
+- Configuración de WinRM para servidores Windows.
+- PSWindowsUpdate instalado en servidores Windows para la gestión de actualizaciones.
+
+
+## Contribuciones 🤝
+Si deseas mejorar este repositorio o agregar nuevas funcionalidades, ¡las contribuciones son bienvenidas! Abre un pull request o reporta un issue para cualquier mejora o corrección.

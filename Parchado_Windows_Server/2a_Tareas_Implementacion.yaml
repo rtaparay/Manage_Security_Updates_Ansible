@@ -1,0 +1,68 @@
+---
+# ansible-playbook 2a_Tareas_Implementacion.yaml > 2a_Tareas_Implementacion.log 2>&1
+
+- name: Tareas Implementacion en Windows
+  hosts: windows
+  become: yes
+  become_method: runas  # Utilizar runas en Windows
+  become_user: ansible  # Usuario administrador en Windows
+  gather_facts: True  # Habilitar la recolección de hechos
+  tasks:
+
+    # Requisitos previos
+
+    - name: Crear archivo para almacenar resultados de las tareas de Implementacion
+      win_file:
+        path: "C:\\parchado\\tareas_implementacion-{{ ansible_date_time.date }}.txt"
+        state: touch
+
+    # Tareas Implementacion || Ejecutar instalación de parches de seguridad
+
+    - name: Ejecutar instalación de parches de seguridad
+      win_shell: |
+        Write-Host "################################################################"
+        Write-Host "#### Ejecutando instalación de parches de seguridad"
+        Write-Host "################################################################"
+        Install-WindowsUpdate -Category 'Security Updates', 'Critical Updates' -AcceptAll -Install -IgnoreReboot
+      args:
+        executable: powershell.exe
+      register: updateSecurity
+
+    - name: Mostrar instalación de parches de seguridad
+      debug:
+        msg: "La instalación de parches de seguridad es: {{ updateSecurity.stdout }}"
+
+    - name: Guardar resultado de instalación de parches de seguridad
+      win_lineinfile:
+        line: "{{ updateSecurity.stdout }}"
+        path: "C:\\parchado\\tareas_implementacion-{{ ansible_date_time.date }}.txt"
+        insertafter: EOF
+
+    # Tareas Implementacion || Reinicio de servidor posterior al parchado
+
+    - name: Reiniciar el servidor después del parchado
+      win_reboot:
+        msg: "Reiniciando el servidor después de la instalación de parches de seguridad"
+        pre_reboot_delay: 0
+        post_reboot_delay: 300
+        reboot_timeout: 3600
+
+    # Tareas Implementacion || Validar salida a Internet para descartar problemas de conectividad
+
+    - name: Validar salida a internet para descartar problemas de conectividad
+      win_shell: |
+        echo "##########################################################################"
+        echo "#### Validando salida a internet para descartar problemas de conectividad"
+        echo "##########################################################################"
+        Test-Connection -ComputerName 8.8.8.8 -Count 4
+      register: ping
+
+    - name: Mostrar salida a internet para descartar problemas de conectividad
+      debug:
+        msg: "La salida a internet es: {{ ping.stdout }}"
+
+    - name: Guardar resultado de validación de conectividad
+      win_lineinfile:
+        line: "{{ ping.stdout }}"
+        path: "C:\\parchado\\tareas_implementacion-{{ ansible_date_time.date }}.txt"
+        insertafter: EOF

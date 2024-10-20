@@ -1,0 +1,130 @@
+---
+# ansible-playbook 3a_Tareas_Posteriores.yaml
+
+- name: Tareas Posteriores
+  hosts: linux
+  become: yes
+  gather_facts: True
+  tasks:
+
+# Requisitos previos
+
+    - name: Crear archivo para almacenar resultados de las tareas Posteriores
+      file:
+        path: /tmp/parchado/tareas_posteriores.txt
+        state: touch
+
+    - name: Guardar evidencias de parches instalados en un Archivo .txt en Amazon Linux 2
+      shell: |
+        echo "#####################################################################################"
+        echo "#### Guardando evidencias de parches instalados en un Archivo .txt en Amazon Linux 2"
+        echo "#####################################################################################"
+        yum list-security --security
+      register: updateinfo_amzn2
+      when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2"
+
+    - name: Guardar evidencias de parches instalados en un Archivo .txt en Amazon Linux 2023
+      shell: |
+        echo "#####################################################################################"
+        echo "#### Guardando evidencias de parches instalados en un Archivo .txt en Amazon Linux 2023"
+        echo "#####################################################################################"
+        dnf updateinfo list security
+      register: updateinfo_amzn2023
+      when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
+
+    - name: Mostrar evidencias de parches instalados en Amazon Linux 2
+      debug:
+        msg: "Las evidencias de parches instalados en Amazon Linux 2 son {{ updateinfo_amzn2.stdout }}"
+      when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2"
+
+    - name: Mostrar evidencias de parches instalados en Amazon Linux 2023
+      debug:
+        msg: "Las evidencias de parches instalados en Amazon Linux 2023 son {{ updateinfo_amzn2023.stdout }}"
+      when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
+
+    - name: Guardar resultado de evidencias de parches instalados en un Archivo .txt en Amazon Linux 2
+      lineinfile:
+        line: "{{ updateinfo_amzn2.stdout }}"
+        dest: /tmp/parchado/tareas_posteriores.txt
+        insertafter: EOF
+      when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2"
+
+    - name: Guardar resultado de evidencias de parches instalados en un Archivo .txt en Amazon Linux 2023
+      lineinfile:
+        line: "{{ updateinfo_amzn2023.stdout }}"
+        dest: /tmp/parchado/tareas_posteriores.txt
+        insertafter: EOF
+      when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
+
+    - name: Observar la hora del sistema, el hostname y la IP
+      shell: |
+        echo "#####################################################################################"
+        echo "#### Observar la hora del sistema, el hostname y la IP"
+        echo "#####################################################################################"
+        date && hostname && hostname -I
+      register: dateInfo
+
+    - name: Mostrar la hora del sistema, el hostname y la IP
+      debug:
+        msg: "La hora del sistema, el hostname y la IP es {{ dateInfo.stdout }}"
+
+    - name: Guardar resultado de la hora del sistema, el hostname y la IP
+      lineinfile:
+        line: "{{ dateInfo.stdout }}"
+        dest: /tmp/parchado/tareas_posteriores.txt
+        insertafter: EOF
+
+    - name: Validar reinicio de servidor posterior al parchado
+      shell: |
+        echo "#####################################################################################"
+        echo "#### Validar reinicio de servidor posterior al parchado"
+        echo "#####################################################################################"
+        uptime
+      register: uptime
+    
+    - name: Mostrar reinicio de servidor posterior al parchado
+      debug:
+        msg: "El reinicio de servidor posterior al parchado es {{ uptime.stdout }}"
+
+    - name: Guardar resultado de reinicio de servidor posterior al parchado
+      lineinfile:
+        line: "{{ uptime.stdout }}"
+        dest: /tmp/parchado/tareas_posteriores.txt
+        insertafter: EOF
+
+    - name: Validar estado de servicios y performance
+      shell: |
+        echo "#####################################################################################"
+        echo "#### Validar estado de servicios y performance"
+        echo "#####################################################################################"
+        top -n 1 -b
+      register: top
+    
+    - name: Mostrar estado de servicios y performance
+      debug:
+        msg: "El estado de servicios y performance es {{ top.stdout }}"
+    
+    - name: Guardar resultado de validación de estado de servicios y performance
+      lineinfile:
+        line: "{{ top.stdout }}"
+        dest: /tmp/parchado/tareas_posteriores.txt
+        insertafter: EOF
+
+    - name: Copiar resultado del parchado al S3
+      shell: |
+        echo "#####################################################################################"
+        echo "#### Copiar resultado del parchado al S3"
+        echo "#####################################################################################"
+        /usr/local/bin/aws s3 cp /tmp/parchado s3://resultados-s3-parchado/parchado/$HOSTNAME/$($date +'%d-%m-%Y') --recursive
+      register: s3
+    
+    - name: Mostrar resultado enviados al S3
+      debug:
+        msg: "El resultado enviado al S3 del parchado es {{ s3.stdout }}"
+    
+    - name: Guardar resultado del envío a S3
+      lineinfile:
+        line: "{{ s3.stdout }}"
+        dest: /tmp/parchado/tareas_posteriores.txt
+        insertafter: EOF
+...

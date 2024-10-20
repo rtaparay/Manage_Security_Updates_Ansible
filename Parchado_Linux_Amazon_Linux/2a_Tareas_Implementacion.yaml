@@ -1,0 +1,80 @@
+---
+# ansible-playbook 2a_Tareas_Implementacion.yaml
+- name: Tareas Implementacion
+  hosts: linux
+  become: yes
+  gather_facts: True
+  tasks:
+
+# Requisitos previos
+
+    - name: Crear archivo para almacenar resultados de las tareas de Implementacion
+      file:
+        path: /tmp/parchado/tareas_implementacion.txt
+        state: touch
+
+    - name: Ejecutar instalacion de parches de seguridad en Amazon Linux 2
+      shell: |
+        echo "################################################################"
+        echo "#### Ejecutando instalacion de parches de seguridad en Amazon Linux 2"
+        echo "################################################################"
+        sudo yum update --security -y
+      register: updateSecurity_amzn2
+      when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2"
+
+    - name: Ejecutar instalacion de parches de seguridad en Amazon Linux 2023
+      shell: |
+        echo "################################################################"
+        echo "#### Ejecutando instalacion de parches de seguridad en Amazon Linux 2023"
+        echo "################################################################"
+        sudo dnf update --security -y
+      register: updateSecurity_amzn2023
+      when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
+
+    - name: Mostrar instalación de parches de seguridad en Amazon Linux 2
+      debug:
+        msg: "La instalación de parches de seguridad en Amazon Linux 2 es {{ updateSecurity_amzn2.stdout }}"
+      when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2"
+
+    - name: Mostrar instalación de parches de seguridad en Amazon Linux 2023
+      debug:
+        msg: "La instalación de parches de seguridad en Amazon Linux 2023 es {{ updateSecurity_amzn2023.stdout }}"
+      when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
+
+    - name: Guardar resultado de instalación de parches de seguridad en Amazon Linux 2
+      lineinfile:
+        line: "{{ updateSecurity_amzn2.stdout }}"
+        dest: /tmp/parchado/tareas_implementacion.txt
+        insertafter: EOF
+      when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2"
+
+    - name: Guardar resultado de instalación de parches de seguridad en Amazon Linux 2023
+      lineinfile:
+        line: "{{ updateSecurity_amzn2023.stdout }}"
+        dest: /tmp/parchado/tareas_implementacion.txt
+        insertafter: EOF
+      when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
+
+    - name: Reinicio de servidor posterior al parchado
+      shell: sudo shutdown -r now
+      async: 1    # Ejecutar en segundo plano
+      poll: 0     # No esperar a que termine
+
+    - name: Validar Conexión SSH despues de 180 seg posterior al reinicio
+      wait_for_connection:
+        delay: 180  # Retardo inicial de 60 segundos antes de iniciar las comprobaciones
+        timeout: 300 # Tiempo máximo de espera de 300 segundos
+        sleep: 5 # Retardo entre comprobaciones de 5 segundos
+
+    - name: Validar salida a internet para descartar problemas de conectividad
+      shell: |
+        echo "##########################################################################"
+        echo "#### Validando salida a internet para descartar problemas de conectividad"
+        echo "##########################################################################"
+        ping 8.8.8.8 -w 5
+      register: ping
+
+    - name: Mostrar salida a internet para descartar problemas de conectividad
+      debug:
+        msg: "La salida a internet es {{ ping.stdout }}"
+...

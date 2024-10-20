@@ -1,0 +1,25 @@
+[all:vars]
+
+
+[linux]
+srv-linux-2 ansible_host=<IP>
+srv-linux-3 ansible_host=<IP>
+
+[linux:vars]
+ansible_connection = ssh
+ansible_become_method=sudo
+ansible_python_interpreter=/usr/bin/python3
+ansible_user=ansible
+ansible_password=<password_server>
+# ansible_private_key_file=/key/remote-key
+
+[windows]
+srv-windows-2012R2  ansible_host=<IP>
+srv-windows-2022    ansible_host=<IP>
+
+[windows:vars]
+ansible_user=ansible
+ansible_password=<password_server>
+ansible_connection=winrm
+ansible_port=5986
+ansible_winrm_server_cert_validation=ignore

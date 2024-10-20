@@ -1,14 +1,11 @@
 ---
-# ansible-playbook 3a_Tareas_Posteriores.yaml
+# ansible-playbook 4a_Tareas_Eliminar_Pruebas_Parchado.yaml
 
 - name: Tareas Posteriores
   hosts: linux
   become: yes
   gather_facts: False
   tasks:
-
-        
-# Tareas Posteriores || Eliminar carpeta parchado
 
     - name: Eliminar pruebas del parchado
       file:
